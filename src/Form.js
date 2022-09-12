@@ -1,9 +1,34 @@
 import {useFormik} from 'formik'
+import * as Yup from 'yup';
+
+
+//----------Не обязательно. 1 вариант валидации. Ручной. Без исп. библиотек.---------//. 
+// По окончании валидации
+// в validate запишется объект, например, errors {name: "Обязательное поле"}.
+// Этот объект помещаем в пользовательский хук
+// const validate=values => {
+//     // Создаем пустой объект, который при валидации ниже будет наполяться 
+//     // свойствами, например - name, значениями - "Обязательное поле"
+//     const errors = {};
+//     // Это свойство и значение будет браться из пользовательского хука, когда 
+//     // помещенная туда функция валидации validate будет вызываться через событие 
+//     // blure
+//     if (!values.name) {
+//         errors.name = 'Обязательное поле';
+//     }
+//     if  (
+//       !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
+//     ) {
+//       errors.email = 'Неправильный адрес email';
+//     }
+//     // Возвращаем результат (объект с ошибками или пустой - без ошибок) в переменную validate
+//     return errors;
+//   }
 
 const Form = () => {
-    // Переменная (название любое). Присваиваем к пользовательский хук,
+    // Переменная (название любое). Присваиваем к ней пользовательский хук,
     // полученный из библиотеки. 
-    // В качестве аргумента помещаем 
+    // Внего в качестве аргумента помещаем 
     // объект (поскольку так удобнее работать)
     const formik = useFormik({    
         // Обязательное свойство. Только так именовать и только в форме
@@ -16,18 +41,39 @@ const Form = () => {
             text: '',
             terms: false,
         },
+        // 1 вариант валидации.
+        // Принимает значения инпутов формы и возращает объект с ошибками или пустой объект без ошибок
+        // validate: validate,
+        // 2 вариант валидации.
+        // При помощи импортируемой библиотеки Yup
+        // Принцип действия тот же как при 1 варианте.
+        // Свойство, которое принимает значения инпутов формы и возращает 
+        // объект с ошибками или пустой объект без ошибок
+        // Именовать свойство только validationSchema
+        validationSchema: Yup.object({
+                //  проверяем строку
+            name: Yup.string()
+                    // Минимум два символа. Если не проходит возвращается
+                    // строка, которую прописываем далее.
+                    .min(2, 'Минимум три символа')
+                    // Проверка на заполненность
+                    .required('Обязательное поле'),
+            email: Yup.string()
+                    .email('Неверный формат email')
+                    .required('Обязательное поле'),
+        }),
         // Обязательное свойство. Только так именовать. Только в форме
         // функции. Функция отправки формы. Т.е. что делать после нажатия
         // кнопки отправки формы. 
-        // В данномслуче показываем то, что отправили. 
-        // Преобразуем то, что отправляем в объект JSON (из офц. документации)
+        // В данном случе values впитывет все данные из input и показывает их в consile.log. 
+        // Т.о. в values будет такой же объект, как в initialValues
         onSubmit: values => console.log(JSON.stringify(values, null, 2))
     })
 
+    console.log();
     return (
         // Вешаем на оболочку формы событие onSubmit (срабатывает при нажатии на кнопку), 
-        // которое будет вызывать 
-        // внутренний метод бибилиотеки formik - handleSubmit, который 
+        // которое будет вызывать внутренний метод бибилиотеки formik - handleSubmit, который 
         // будет вызывать созданный нами в пользовательском хуке метод 
         // onSubmit. Этот метод будет впитывать в себя все значения инпутов,
         // содержащихся в этой  форме
@@ -46,23 +92,43 @@ const Form = () => {
                 onChange={formik.handleChange}
         // Чтобы форма была управляемая, то в этот input записываем то, что записали в values 
                 value = {formik.values.name}
+        // Через событие onBlur запуск функции validate с валидацией 
+        // только через внутренний метод handleBlur и 
+                onBlur = {formik.handleBlur}
             />
+        {/*Если есть ошибка && и взаимодействие было только с этим инпутом 
+        (внутри библиотеки объект touched), то покажи сообщение об ошибке.
+        Иначе сообщение об ошибке будет на всех инпутах, а не на том, на котором
+        сработало*/}
+            {formik.errors.name && formik.touched.name 
+            ? formik.errors.name 
+            : null}
             <label htmlFor="email">Ваша почта</label>
             <input
                 id="email"
                 name="email"
                 type="email"
+                onChange={formik.handleChange}
+                value = {formik.values.email}
+                onBlur = {formik.handleBlur}
             />
+            {formik.errors.email && formik.touched.email 
+            ? formik.errors.email 
+            : null}
             <label htmlFor="amount">Количество</label>
             <input
                 id="amount"
                 name="amount"
                 type="number"
+                onChange={formik.handleChange}
+                value = {formik.values.amount}
             />
             <label htmlFor="currency">Валюта</label>
             <select
                 id="currency"
-                name="currency">
+                name="currency"
+                onChange={formik.handleChange}
+                value = {formik.values.currency}>                 
                     <option value="">Выберите валюту</option>
                     <option value="USD">USD</option>
                     <option value="UAH">UAH</option>
@@ -72,9 +138,15 @@ const Form = () => {
             <textarea 
                 id="text"
                 name="text"
+                onChange={formik.handleChange}
+                value = {formik.values.text}
             />
             <label className="checkbox">
-                <input name="terms" type="checkbox" />
+                <input name="terms" 
+                type="checkbox" 
+                onChange={formik.handleChange}
+                value = {formik.values.terms}
+                />
                 Соглашаетесь с политикой конфиденциальности?
             </label>
             <button type="submit">Отправить</button>
