@@ -1,7 +1,33 @@
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form, useField } from 'formik';
 import * as Yup from 'yup';
 
-const СustomizableForm = () => ( 
+const Input = ({lable, ...props}) => {
+    const [field, meta] = useField(props)
+    return (
+        <>
+            <label htmlFor={props.name}>{lable}</label>
+            <input {...props} {...field}/>
+            {meta.touched && meta.error ? (<div>{meta.error}</div>) : null}
+        </>        
+    )
+}
+
+const Сheckbox = ({lable, ...props}) => {
+    const [field, meta] = useField({...props, type: 'checkbox'})
+    return (
+        <>
+            <label className="checkbox">
+                <input type="checkbox" {...props} {...field}/>
+                {lable}
+            </label>
+            {meta.touched && meta.error ? (<div>{meta.error}</div>) : null}
+        </>
+    )
+}
+
+
+
+const СustomizableForm = () => (
         <Formik       
             initialValues = {{
                 name: '',
@@ -19,20 +45,20 @@ const СustomizableForm = () => (
         >
             <Form className="form">
                 <h2>Отправить пожертвование</h2>
-                <label htmlFor="name">Ваше имя</label>
-                <Field 
+                <Input  
+                    lable="Ваше имя"
                     id="name"
                     name="name"
-                    type="text"
-                />  
-                <ErrorMessage name="name" component="div" />  
-                <label htmlFor="email">Ваша почта</label>
-                <Field 
+                    type="text"/>             
+                <Input  
+                    lable="Ваша почта"
                     id="email"
                     name="email"
-                    type="email"                
-                />
-                <ErrorMessage name="email" component="div" /> 
+                    type="email"/>
+                <Сheckbox
+                    lable='Соглашаетесь с политикой конфиденциальности?'
+                    name="terms" 
+                    type="checkbox"/>
                 <button type="submit">Отправить</button>
             </Form>
         </Formik>    
